@@ -2,6 +2,13 @@
 
 Minecraft **1.21.11** için hazırlanmış, **OP gerektirmeyen** kapsamlı Türkçe Skript admin ve sunucu yönetim sistemi.
 
+## 📺 YouTube
+
+Minecraft içerikleri, PvP videoları ve WastTry projeleri için YouTube kanalım:
+
+**WastTry** — [YouTube Kanalı](https://youtube.com/@wasttry?utm_source=chatgpt.com)
+
+
 ## ✨ Özellikler
 
 - 🛡️ OP gerektirmeyen admin sistemi
