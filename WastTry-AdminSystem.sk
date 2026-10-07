@@ -1,69 +1,70 @@
-# ==========================================
-# WastTry ADMIN + TAKIM + BAKIM + ENV SYSTEM
+# ==========================================================
+# WastTry Admin System
 # Minecraft 1.21.11
 # Skript 2.16.2
 # OP GEREKMEZ
-# ==========================================
-#
-# GitHub:
-# https://github.com/TheWastTry/WastTry-AdminSystem
-#
-# ==========================================
-
-
-# ==========================================
-# AYARLAR
-# ==========================================
+# ==========================================================
 
 options:
-
-    # ADMINLER
     admin-1: WastTry
     admin-2: KGAMEOVER
-
-    # BAKIM MODU SAHİBİ
     maintenance-owner: WastTry
-
-    # TAKIM
     max-team-size: 5
-
-    # ADMIN TAKİP MESAFESİ
     admin-max-distance: 10
 
-
-# ==========================================
+# ==========================================================
 # ADMIN KONTROLÜ
-# ==========================================
+# ==========================================================
 
 function isAdmin(p: player) :: boolean:
-
     if {_p}'s name is "{@admin-1}":
         return true
-
     if {_p}'s name is "{@admin-2}":
         return true
-
     return false
-
-
-# ==========================================
-# BAKIM SAHİBİ KONTROLÜ
-# ==========================================
 
 function isMaintenanceOwner(p: player) :: boolean:
-
     if {_p}'s name is "{@maintenance-owner}":
         return true
-
     return false
 
+# ==========================================================
+# TAKIM RENGİ
+# ==========================================================
 
-# ==========================================
-# TAKIM TAB
-# ==========================================
+function getTeamColor(team: text) :: text:
+    if {team.color.%{_team}%} is set:
+        return {team.color.%{_team}%}
+    return "green"
+
+function getChatColor(color: text) :: text:
+    if {_color} is "red":
+        return "&c"
+    if {_color} is "gold":
+        return "&6"
+    if {_color} is "yellow":
+        return "&e"
+    if {_color} is "green":
+        return "&a"
+    if {_color} is "dark_green":
+        return "&2"
+    if {_color} is "aqua":
+        return "&b"
+    if {_color} is "blue":
+        return "&9"
+    if {_color} is "dark_purple":
+        return "&5"
+    if {_color} is "light_purple":
+        return "&d"
+    if {_color} is "white":
+        return "&f"
+    return "&a"
+
+# ==========================================================
+# TAB GÜNCELLE
+# ==========================================================
 
 function updateTeamTab(p: player):
-
     if {team.%{_p}'s uuid%} is not set:
         stop
 
@@ -73,227 +74,120 @@ function updateTeamTab(p: player):
     if {_teamname} is not set:
         set {_teamname} to "TAKIM"
 
-    if {team.color.%{_team}%} is set:
-        set {_color} to {team.color.%{_team}%}
-    else:
-        set {_color} to "green"
+    # ÖNEMLİ:
+    # TAB'daki mevcut isimden değil, oyuncunun gerçek isminden temel al.
+    set {_base} to {_p}'s name
 
-    if {team.tabbase.%{_p}'s uuid%} is not set:
-        set {team.tabbase.%{_p}'s uuid%} to {_p}'s tab list name
+    set {_color} to getTeamColor({_team})
+    set {_chatcolor} to getChatColor({_color})
 
-    set {_base} to {team.tabbase.%{_p}'s uuid%}
+    set {team.tabbase.%{_p}'s uuid%} to {_base}
 
-    if {_color} is "red":
-        set {_tabcolor} to "&c"
-    else if {_color} is "gold":
-        set {_tabcolor} to "&6"
-    else if {_color} is "yellow":
-        set {_tabcolor} to "&e"
-    else if {_color} is "green":
-        set {_tabcolor} to "&a"
-    else if {_color} is "dark_green":
-        set {_tabcolor} to "&2"
-    else if {_color} is "aqua":
-        set {_tabcolor} to "&b"
-    else if {_color} is "blue":
-        set {_tabcolor} to "&9"
-    else if {_color} is "dark_purple":
-        set {_tabcolor} to "&5"
-    else if {_color} is "light_purple":
-        set {_tabcolor} to "&d"
-    else if {_color} is "white":
-        set {_tabcolor} to "&f"
-    else:
-        set {_tabcolor} to "&a"
+    set {_p}'s tab list name to "%{_base}% &f- %{_chatcolor}%&l%{_teamname}%"
 
-    set {_p}'s tab list name to "%{_base}% &f- %{_tabcolor}%&l%{_teamname}%"
-
-
-# ==========================================
+# ==========================================================
 # CHAT
-# ==========================================
+# ==========================================================
 
 on chat:
 
-    # ======================================
-    # MUTE
-    # ======================================
-
     if {muted.%player's uuid%} is true:
-
         if isAdmin(player) is false:
-
             cancel event
-
             send "&c&lMUTE &8» &fSusturuldun, chat kullanamazsın." to player
-
             play sound "entity.villager.no" with volume 1 and pitch 1 to player
-
             stop
 
-
-    # ======================================
-    # BAKIM OYUNCU EKLEME
-    # ======================================
-
     if {maintenance.input.%player's uuid%} is true:
-
         cancel event
 
         if isMaintenanceOwner(player) is false:
-
             delete {maintenance.input.%player's uuid%}
-
             stop
 
-        set {_input} to message
-
-        if {_input} is "iptal":
-
+        if message is "iptal":
             delete {maintenance.input.%player's uuid%}
-
             send "&c✖ İşlem iptal edildi." to player
-
             stop
 
-        execute console command "whitelist add %{_input}%"
-
+        execute console command "whitelist add %message%"
         delete {maintenance.input.%player's uuid%}
 
         send "" to player
         send "&a&l✔ OYUNCU WHITELIST'E EKLENDİ" to player
-        send "&7» Oyuncu: &f%{_input}%" to player
+        send "&7» Oyuncu: &f%message%" to player
         send "" to player
 
         play sound "block.note_block.pling" with volume 1 and pitch 1.2 to player
-
         stop
 
-
-    # ======================================
-    # TAKIM INPUT
-    # ======================================
-
     if {team.input.%player's uuid%} is set:
-
         cancel event
 
-        set {_input} to message
-
-        if {_input} is "iptal":
-
+        if message is "iptal":
             delete {team.input.%player's uuid%}
-
             send "&c✖ İşlem iptal edildi." to player
-
             stop
-
-
-        # ==================================
-        # TAKIM ADI
-        # ==================================
 
         if {team.input.%player's uuid%} is "name":
 
-            if length of {_input} < 2:
-
-                send "&c✖ Takım adı en az 2 karakter olmalı." to player
-
-                stop
-
-            if length of {_input} > 8:
-
-                send "&c✖ Takım adı en fazla 8 karakter olabilir." to player
-
-                stop
-
             if {team.%player's uuid%} is not set:
-
                 delete {team.input.%player's uuid%}
+                stop
 
+            if length of message < 2:
+                send "&c✖ Takım adı en az 2 karakter olmalı." to player
+                stop
+
+            if length of message > 8:
+                send "&c✖ Takım adı en fazla 8 karakter olabilir." to player
                 stop
 
             set {_team} to {team.%player's uuid%}
-
-            set {team.name.%{_team}%} to {_input}
-
+            set {team.name.%{_team}%} to message
             delete {team.input.%player's uuid%}
 
-            if {team.color.%{_team}%} is set:
-
-                set {_color} to {team.color.%{_team}%}
-
-            else:
-
-                set {_color} to "green"
-
-            execute console command "team modify %{_team}% color white"
-
-            execute console command "team modify %{_team}% suffix {text:' - ',color:'white',bold:false,extra:[{text:'%{_input}%',color:'%{_color}%',bold:true}]}"
+            updateTeamTab(player)
 
             loop {team.members.%{_team}%::*}:
-
                 if loop-value is online:
-
                     updateTeamTab(loop-value)
 
-            send "&a✔ Takım adı &f%{_input}% &aolarak ayarlandı." to player
-
+            send "&a✔ Takım adı &f%message% &aolarak ayarlandı." to player
             play sound "block.note_block.pling" with volume 1 and pitch 1.2 to player
-
             stop
-
-
-        # ==================================
-        # OYUNCU DAVET
-        # ==================================
 
         if {team.input.%player's uuid%} is "invite":
 
             if {team.%player's uuid%} is not set:
-
-                send "&c✖ Önce bir takım oluşturmalısın." to player
-
                 delete {team.input.%player's uuid%}
-
+                send "&c✖ Önce bir takım oluşturmalısın." to player
                 stop
 
             set {_target} to none
 
             loop all players:
-
-                if loop-player's name is {_input}:
-
+                if loop-player's name is message:
                     set {_target} to loop-player
 
             if {_target} is none:
-
                 send "&c✖ Bu oyuncu çevrimiçi değil." to player
-
                 stop
 
             if {_target}'s uuid is player's uuid:
-
                 send "&c✖ Kendini davet edemezsin." to player
-
                 stop
 
             set {_team} to {team.%player's uuid%}
 
             if size of {team.members.%{_team}%::*} >= {@max-team-size}:
-
-                send "&c✖ Takımınız maksimum {@max-team-size} kişi olabilir." to player
-
+                send "&c✖ Takım maksimum {@max-team-size} kişi olabilir." to player
                 delete {team.input.%player's uuid%}
-
                 stop
 
             if {team.%{_target}'s uuid%} is set:
-
                 send "&c✖ Bu oyuncunun zaten bir takımı var." to player
-
                 delete {team.input.%player's uuid%}
-
                 stop
 
             set {team.invite.%{_target}'s uuid%} to {_team}
@@ -305,18 +199,12 @@ on chat:
 
             send "" to {_target}
             send "&a&l⚔ TAKIM DAVETİ" to {_target}
-            send "&7» &f%player's name% &7seni &e%{team.name.%{_team}%} &7takımına davet etti." to {_target}
+            send "&7» &f%player's name% &7seni &e%{team.name.%{_team}%}% &7takımına davet etti." to {_target}
             send "&7» Kabul etmek için &a/takımkabul &7yaz." to {_target}
             send "" to {_target}
 
             play sound "entity.experience_orb.pickup" with volume 1 and pitch 1.2 to {_target}
-
             stop
-
-
-    # ======================================
-    # ADMIN TARGET SEÇİMİ
-    # ======================================
 
     if {admin.active.%player%} is true:
 
@@ -336,83 +224,23 @@ on chat:
 
                     play sound "entity.enderman.teleport" with volume 1 and pitch 1 to player
 
-                    wait 2 ticks
-
-                    play sound "block.beacon.power_select" with volume 1 and pitch 1.2 to player
-
                     send "&f★ %loop-player's name% &7adlı oyuncuya ışınlandın." to player
                     send "&7⚡ Maksimum uzaklık: &f{@admin-max-distance} blok." to player
 
                     stop
 
-
-    # ======================================
-    # TAKIM CHAT
-    # ======================================
-
     if {team.%player's uuid%} is set:
 
         set {_team} to {team.%player's uuid%}
         set {_teamname} to {team.name.%{_team}%}
-
-        if {team.color.%{_team}%} is set:
-
-            set {_color} to {team.color.%{_team}%}
-
-        else:
-
-            set {_color} to "green"
-
-        if {_color} is "red":
-
-            set {_chatcolor} to "&c"
-
-        else if {_color} is "gold":
-
-            set {_chatcolor} to "&6"
-
-        else if {_color} is "yellow":
-
-            set {_chatcolor} to "&e"
-
-        else if {_color} is "green":
-
-            set {_chatcolor} to "&a"
-
-        else if {_color} is "dark_green":
-
-            set {_chatcolor} to "&2"
-
-        else if {_color} is "aqua":
-
-            set {_chatcolor} to "&b"
-
-        else if {_color} is "blue":
-
-            set {_chatcolor} to "&9"
-
-        else if {_color} is "dark_purple":
-
-            set {_chatcolor} to "&5"
-
-        else if {_color} is "light_purple":
-
-            set {_chatcolor} to "&d"
-
-        else if {_color} is "white":
-
-            set {_chatcolor} to "&f"
-
-        else:
-
-            set {_chatcolor} to "&a"
+        set {_color} to getTeamColor({_team})
+        set {_chatcolor} to getChatColor({_color})
 
         set chat format to "%{_chatcolor}%%{_teamname}% &8- &f%player% &8» &f%message%"
 
-
-# ==========================================
+# ==========================================================
 # /ADMIN
-# ==========================================
+# ==========================================================
 
 command /admin:
     executable by: players
@@ -420,19 +248,11 @@ command /admin:
     trigger:
 
         if isAdmin(player) is false:
-
             send "&c✖ Bu komutu kullanamazsın!" to player
-
-            play sound "entity.villager.no" with volume 1 and pitch 1 to player
-
             stop
 
         if {admin.active.%player%} is true:
-
             send "&e⚠ Zaten admin modundasın!" to player
-
-            play sound "entity.villager.no" with volume 1 and pitch 1 to player
-
             stop
 
         set {admin.return.%player%} to location of player
@@ -447,42 +267,32 @@ command /admin:
 
         play sound "block.beacon.activate" with volume 1 and pitch 1 to player
 
-        wait 3 ticks
-
-        play sound "entity.enderman.teleport" with volume 1 and pitch 1 to player
-
         send "" to player
         send "&8&m━━━━━━━━━━━━━━━━━━━━━━━━" to player
         send "&c&l⚡ ADMIN MODU" to player
         send "" to player
-        send "&7» İzlemek istediğin oyuncunun ismini" to player
-        send "&7  chat'e yaz." to player
+        send "&7» İzlemek istediğin oyuncunun ismini chat'e yaz." to player
         send "" to player
         send "&e&l★ Online Oyuncular:" to player
 
         loop all players:
-
             send "&8• &f%loop-player's name%" to player
 
         send "" to player
-        send "&7⚡ Oyuncudan en fazla &f{@admin-max-distance} blok &7uzakta olabilirsin." to player
+        send "&7⚡ Maksimum uzaklık: &f{@admin-max-distance} blok" to player
         send "&7» Çıkmak için &c/adminleave" to player
         send "&8&m━━━━━━━━━━━━━━━━━━━━━━━━" to player
-        send "" to player
 
-
-# ==========================================
+# ==========================================================
 # ADMIN HAREKET
-# ==========================================
+# ==========================================================
 
 on player move:
 
     if {admin.active.%player%} is true:
 
         if {admin.target.%player%} is not set:
-
             cancel event
-
             stop
 
         if {admin.target.%player%} is not online:
@@ -492,14 +302,12 @@ on player move:
             send "&e⚠ Takip ettiğin oyuncu oyundan ayrıldı." to player
             send "&7» Yeni bir oyuncunun ismini chat'e yaz." to player
 
-            play sound "entity.villager.no" with volume 1 and pitch 0.8 to player
+# ==========================================================
+# ADMIN TAKİP
+# 1 TICK -> 5 TICK
+# ==========================================================
 
-
-# ==========================================
-# ACTIONBAR + MESAFE SINIRI
-# ==========================================
-
-every 1 tick:
+every 5 ticks:
 
     loop all players:
 
@@ -510,34 +318,21 @@ every 1 tick:
                 if {admin.target.%loop-player%} is online:
 
                     set {_target} to {admin.target.%loop-player%}
-                    set {_targetName} to {_target}'s name
                     set {_distance} to distance between loop-player and {_target}
 
                     if {_distance} <= {@admin-max-distance}:
 
-                        send action bar "&c&l⚡ ADMIN &8| &fOyuncu: &e%{_targetName}% &8| &fUzaklık: &e%{_distance}% &8/ &e{@admin-max-distance} blok" to loop-player
+                        send action bar "&c&l⚡ ADMIN &8| &fOyuncu: &e%{_target}'s name% &8| &fUzaklık: &e%{_distance}% &8/ &e{@admin-max-distance} blok" to loop-player
 
                     else:
 
                         teleport loop-player to {_target}
 
-                        send action bar "&c&l⚡ ADMIN &8| &fOyuncu: &e%{_targetName}% &8| &fUzaklık: &c{@admin-max-distance} blok &8/ &e{@admin-max-distance} blok &8| &c⚠ UZAK!" to loop-player
+                        send action bar "&c&l⚡ ADMIN &8| &fOyuncu: &e%{_target}'s name% &8| &cUZAK!" to loop-player
 
-                        play sound "block.note_block.bass" with volume 1 and pitch 0.7 to loop-player
-
-                else:
-
-                    delete {admin.target.%loop-player%}
-
-                    send "&e⚠ Takip ettiğin oyuncu oyundan ayrıldı." to loop-player
-                    send "&7» Yeni bir oyuncunun ismini chat'e yaz." to loop-player
-
-                    play sound "entity.villager.no" with volume 1 and pitch 0.8 to loop-player
-
-
-# ==========================================
+# ==========================================================
 # /ADMINUYARI
-# ==========================================
+# ==========================================================
 
 command /adminuyarı <player>:
     executable by: players
@@ -545,43 +340,29 @@ command /adminuyarı <player>:
     trigger:
 
         if isAdmin(player) is false:
-
             send "&c✖ Bu komutu kullanamazsın!" to player
-
-            play sound "entity.villager.no" with volume 1 and pitch 1 to player
-
             stop
 
         if player's name is "{@admin-2}":
 
             if {admin.warning.cooldown.%player%} is set:
 
-                send "" to player
-                send "&e⚠ &fBu komutu tekrar kullanmak için beklemelisin." to player
+                send "&e⚠ Bu komutu tekrar kullanmak için beklemelisin." to player
                 send "&7» Kalan süre: &e%{admin.warning.cooldown.%player%}%" to player
-                send "" to player
-
-                play sound "entity.villager.no" with volume 1 and pitch 1 to player
 
                 stop
 
             set {admin.warning.cooldown.%player%} to 5 minutes
 
-        send "" to player
-        send "&8&m━━━━━━━━━━━━━━━━━━━━━━━━" to player
-        send "&c&l⚡ UYARI GÖNDERİLDİ" to player
-        send "&7» Oyuncu: &f%arg-player's name%" to player
-        send "&8&m━━━━━━━━━━━━━━━━━━━━━━━━" to player
-        send "" to player
+        send "&c&l⚡ UYARI GÖNDERİLDİ &8» &f%arg-player's name%" to player
 
         send title "&c&lADMİNDEN BİR UYARI ALDIN!" with subtitle "&f⚠ Bir daha yapma!" to arg-player for 10 ticks, 60 ticks, 20 ticks
 
         play sound "entity.lightning_bolt.thunder" with volume 1 and pitch 1 to arg-player
 
-
-# ==========================================
+# ==========================================================
 # UYARI COOLDOWN
-# ==========================================
+# ==========================================================
 
 every 1 second:
 
@@ -595,10 +376,9 @@ every 1 second:
 
                 delete {admin.warning.cooldown.%loop-player%}
 
-
-# ==========================================
+# ==========================================================
 # /ADMINLEAVE
-# ==========================================
+# ==========================================================
 
 command /adminleave:
     executable by: players
@@ -606,29 +386,19 @@ command /adminleave:
     trigger:
 
         if isAdmin(player) is false:
-
             send "&c✖ Bu komutu kullanamazsın!" to player
-
-            play sound "entity.villager.no" with volume 1 and pitch 1 to player
-
             stop
 
         if {admin.active.%player%} is not true:
-
             send "&e⚠ Admin modunda değilsin!" to player
-
-            play sound "entity.villager.no" with volume 1 and pitch 1 to player
-
             stop
 
         reveal player to all players
 
         if {admin.return.%player%} is set:
-
             teleport player to {admin.return.%player%}
 
         if {admin.gamemode.%player%} is set:
-
             set player's gamemode to {admin.gamemode.%player%}
 
         delete {admin.active.%player%}
@@ -640,19 +410,9 @@ command /adminleave:
 
         play sound "block.beacon.deactivate" with volume 1 and pitch 1 to player
 
-        wait 3 ticks
-
-        play sound "entity.player.levelup" with volume 1 and pitch 1.2 to player
-
-        send "" to player
-        send "&7Admin modundan çıktın." to player
-        send "&7★ Eski konumuna geri döndün." to player
-        send "" to player
-
-
-# ==========================================
+# ==========================================================
 # /MUTE
-# ==========================================
+# ==========================================================
 
 command /mute <player>:
     executable by: players
@@ -660,27 +420,15 @@ command /mute <player>:
     trigger:
 
         if isAdmin(player) is false:
-
             send "&c✖ Bu komutu kullanamazsın!" to player
-
-            play sound "entity.villager.no" with volume 1 and pitch 1 to player
-
             stop
 
         if arg-player is player:
-
             send "&c✖ Kendini susturamazsın!" to player
-
-            play sound "entity.villager.no" with volume 1 and pitch 1 to player
-
             stop
 
         if {muted.%arg-player's uuid%} is true:
-
-            send "&e⚠ &f%arg-player's name% zaten susturulmuş." to player
-
-            play sound "entity.villager.no" with volume 1 and pitch 1 to player
-
+            send "&e⚠ %arg-player's name% zaten susturulmuş." to player
             stop
 
         set {muted.%arg-player's uuid%} to true
@@ -688,13 +436,9 @@ command /mute <player>:
         send "&c&lMUTE &8» &f%arg-player's name% &7susturuldu." to player
         send "&c&lMUTE &8» &7Artık chat kullanamazsın." to arg-player
 
-        play sound "block.anvil.land" with volume 1 and pitch 1 to player
-        play sound "entity.villager.no" with volume 1 and pitch 0.8 to arg-player
-
-
-# ==========================================
+# ==========================================================
 # /UNMUTE
-# ==========================================
+# ==========================================================
 
 command /unmute <player>:
     executable by: players
@@ -702,19 +446,11 @@ command /unmute <player>:
     trigger:
 
         if isAdmin(player) is false:
-
             send "&c✖ Bu komutu kullanamazsın!" to player
-
-            play sound "entity.villager.no" with volume 1 and pitch 1 to player
-
             stop
 
         if {muted.%arg-player's uuid%} is not true:
-
-            send "&e⚠ &f%arg-player's name% zaten susturulmamış." to player
-
-            play sound "entity.villager.no" with volume 1 and pitch 1 to player
-
+            send "&e⚠ %arg-player's name% zaten susturulmamış." to player
             stop
 
         delete {muted.%arg-player's uuid%}
@@ -722,12 +458,9 @@ command /unmute <player>:
         send "&c&lMUTE &8» &f%arg-player's name% &7artık susturulmuş değil." to player
         send "&c&lMUTE &8» &7Tekrar chat kullanabilirsin." to arg-player
 
-        play sound "entity.player.levelup" with volume 1 and pitch 1.2 to arg-player
-
-
-# ==========================================
+# ==========================================================
 # /TAKIM
-# ==========================================
+# ==========================================================
 
 command /takım:
     executable by: players
@@ -743,7 +476,7 @@ command /takım:
             set {_team} to {team.%player's uuid%}
             set {_teamname} to {team.name.%{_team}%}
 
-            set slot 10 of player's current inventory to emerald named "&a&l⚔ TAKIMIM" with lore "&7Takım: &f%{_teamname}%" and "&7Üye sayısı: &f%size of {team.members.%{_team}%::*}%/{@max-team-size}"
+            set slot 10 of player's current inventory to emerald named "&a&l⚔ TAKIMIM" with lore "&7Takım: &f%{_teamname}%" and "&7Üye: &f%size of {team.members.%{_team}%::*}%/{@max-team-size}"
 
             set slot 12 of player's current inventory to name tag named "&e&l✏ TAKIM ADI" with lore "&7Takım adını değiştir."
 
@@ -759,10 +492,9 @@ command /takım:
 
             set slot 22 of player's current inventory to barrier named "&c&l✖ KAPAT"
 
-
-# ==========================================
+# ==========================================================
 # TAKIM GUI
-# ==========================================
+# ==========================================================
 
 on inventory click:
 
@@ -771,19 +503,13 @@ on inventory click:
         cancel event
 
         if clicked inventory is not event-inventory:
-
             stop
-
-        # TAKIM OLUŞTUR
 
         if clicked slot is 13:
 
             if {team.%player's uuid%} is set:
-
                 close player's inventory
-
                 send "&e⚠ Zaten bir takımın var." to player
-
                 stop
 
             set {_id} to random integer between 10000 and 99999
@@ -798,85 +524,54 @@ on inventory click:
             add player to {team.members.%{_team}%::*}
 
             execute console command "team join %{_team}% %player%"
-            execute console command "team modify %{_team}% color white"
-
-            execute console command "team modify %{_team}% suffix {text:' - ',color:'white',bold:false,extra:[{text:'TAKIM',color:'green',bold:true}]}"
-
             execute console command "team modify %{_team}% collisionRule never"
 
             updateTeamTab(player)
 
             close player's inventory
 
-            send "" to player
             send "&a&l⚔ TAKIM OLUŞTURULDU!" to player
             send "&7» Takım adı: &fTAKIM" to player
-            send "&7» Takım rengi: &aYeşil" to player
-            send "&7» Nametag: &f%player's name% &7- &a&lTAKIM" to player
-            send "" to player
-            send "&7Takım ayarlarını değiştirmek için &e/takım" to player
-            send "" to player
 
             play sound "block.beacon.activate" with volume 1 and pitch 1.2 to player
-
             stop
-
-
-        # TAKIM BİLGİLERİ
 
         if clicked slot is 10:
 
             if {team.%player's uuid%} is not set:
-
                 stop
 
             set {_team} to {team.%player's uuid%}
 
             close player's inventory
 
-            send "" to player
             send "&a&l⚔ TAKIM BİLGİLERİ" to player
             send "&7Takım adı: &f%{team.name.%{_team}%}%"
-            send "&7Üyeler: &f%size of {team.members.%{_team}%::*}%&7/{@max-team-size}"
-            send "" to player
+            send "&7Üyeler: &f%size of {team.members.%{_team}%::*}%/{@max-team-size}"
 
             loop {team.members.%{_team}%::*}:
-
                 send "&8• &f%loop-value%" to player
 
-            send ""
-
             stop
-
-
-        # TAKIM ADI
 
         if clicked slot is 12:
 
             if {team.%player's uuid%} is not set:
-
                 stop
 
             close player's inventory
 
             set {team.input.%player's uuid%} to "name"
 
-            send "" to player
             send "&e&l✏ TAKIM ADI" to player
             send "&7Yeni takım adını chat'e yaz."
             send "&7Maksimum: &f8 karakter"
-            send "&7İptal etmek için &ciptal &7yaz."
-            send "" to player
-
+            send "&7İptal: &ciptal"
             stop
-
-
-        # TAKIM RENGİ
 
         if clicked slot is 14:
 
             if {team.%player's uuid%} is not set:
-
                 stop
 
             close player's inventory
@@ -898,36 +593,24 @@ on inventory click:
 
             stop
 
-
-        # OYUNCU DAVET
-
         if clicked slot is 16:
 
             if {team.%player's uuid%} is not set:
-
                 stop
 
             close player's inventory
 
             set {team.input.%player's uuid%} to "invite"
 
-            send "" to player
             send "&b&l👥 OYUNCU DAVET ET" to player
-            send "&7Davet etmek istediğin oyuncunun adını chat'e yaz."
-            send "&7İptal etmek için &ciptal &7yaz."
-            send "" to player
-
+            send "&7Oyuncunun adını chat'e yaz."
+            send "&7İptal: &ciptal"
             stop
-
-
-        # TAKIMDAN AYR
 
         if clicked slot is 22:
 
             if {team.%player's uuid%} is not set:
-
                 close player's inventory
-
                 stop
 
             set {_team} to {team.%player's uuid%}
@@ -936,9 +619,7 @@ on inventory click:
 
             remove player from {team.members.%{_team}%::*}
 
-            if {team.tabbase.%player's uuid%} is set:
-
-                set player's tab list name to {team.tabbase.%player's uuid%}
+            set player's tab list name to player's name
 
             delete {team.tabbase.%player's uuid%}
             delete {team.%player's uuid%}
@@ -947,110 +628,63 @@ on inventory click:
 
             send "&c✖ Takımdan ayrıldın." to player
 
-            play sound "block.anvil.land" with volume 1 and pitch 1 to player
+# ==========================================================
+# TAKIM RENK MENÜSÜ
+# ==========================================================
 
-            stop
-
-
-    # ======================================
-    # RENK MENÜSÜ
-    # ======================================
+on inventory click:
 
     if name of event-inventory is "&8🎨 Takım Rengi":
 
         cancel event
 
         if clicked inventory is not event-inventory:
-
             stop
 
         if {team.%player's uuid%} is not set:
-
             close player's inventory
-
             stop
 
         set {_team} to {team.%player's uuid%}
         set {_color} to ""
-        set {_colorName} to ""
 
         if clicked slot is 10:
-
             set {_color} to "red"
-            set {_colorName} to "Kırmızı"
-
         else if clicked slot is 11:
-
             set {_color} to "gold"
-            set {_colorName} to "Turuncu"
-
         else if clicked slot is 12:
-
             set {_color} to "yellow"
-            set {_colorName} to "Sarı"
-
         else if clicked slot is 13:
-
             set {_color} to "green"
-            set {_colorName} to "Açık Yeşil"
-
         else if clicked slot is 14:
-
             set {_color} to "dark_green"
-            set {_colorName} to "Yeşil"
-
         else if clicked slot is 15:
-
             set {_color} to "aqua"
-            set {_colorName} to "Turkuaz"
-
         else if clicked slot is 16:
-
             set {_color} to "blue"
-            set {_colorName} to "Mavi"
-
         else if clicked slot is 21:
-
             set {_color} to "dark_purple"
-            set {_colorName} to "Mor"
-
         else if clicked slot is 22:
-
             set {_color} to "light_purple"
-            set {_colorName} to "Pembe"
-
         else if clicked slot is 23:
-
             set {_color} to "white"
-            set {_colorName} to "Beyaz"
-
         else:
-
             stop
 
         set {team.color.%{_team}%} to {_color}
-        set {_teamname} to {team.name.%{_team}%}
-
-        execute console command "team modify %{_team}% color white"
-
-        execute console command "team modify %{_team}% suffix {text:' - ',color:'white',bold:false,extra:[{text:'%{_teamname}%',color:'%{_color}%',bold:true}]}"
 
         loop {team.members.%{_team}%::*}:
 
             if loop-value is online:
-
                 updateTeamTab(loop-value)
 
         close player's inventory
 
-        send "&a✔ Takım rengi &f%{_colorName}% &aolarak değiştirildi." to player
+        send "&a✔ Takım rengi değiştirildi." to player
 
-        play sound "block.note_block.pling" with volume 1 and pitch 1.2 to player
-
-
-# ==========================================
+# ==========================================================
 # /TAKIMKABUL
-# ==========================================
+# ==========================================================
 
 command /takımkabul:
     executable by: players
@@ -1058,50 +692,25 @@ command /takımkabul:
     trigger:
 
         if {team.invite.%player's uuid%} is not set:
-
             send "&c✖ Bekleyen bir takım davetin yok." to player
-
             stop
 
         if {team.%player's uuid%} is set:
-
             send "&c✖ Zaten bir takımın var." to player
-
             delete {team.invite.%player's uuid%}
-            delete {team.inviter.%player's uuid%}
-
             stop
 
         set {_team} to {team.invite.%player's uuid%}
 
         if size of {team.members.%{_team}%::*} >= {@max-team-size}:
-
             send "&c✖ Bu takım artık dolu." to player
-
             delete {team.invite.%player's uuid%}
-            delete {team.inviter.%player's uuid%}
-
             stop
 
         add player to {team.members.%{_team}%::*}
-
         set {team.%player's uuid%} to {_team}
 
         execute console command "team join %{_team}% %player%"
-        execute console command "team modify %{_team}% color white"
-
-        set {_teamname} to {team.name.%{_team}%}
-
-        if {team.color.%{_team}%} is set:
-
-            set {_color} to {team.color.%{_team}%}
-
-        else:
-
-            set {_color} to "green"
-
-        execute console command "team modify %{_team}% suffix {text:' - ',color:'white',bold:false,extra:[{text:'%{_teamname}%',color:'%{_color}%',bold:true}]}"
-
         execute console command "team modify %{_team}% collisionRule never"
 
         updateTeamTab(player)
@@ -1109,17 +718,12 @@ command /takımkabul:
         delete {team.invite.%player's uuid%}
         delete {team.inviter.%player's uuid%}
 
-        send "" to player
         send "&a&l✔ TAKIMA KATILDIN!" to player
         send "&7Takım: &f%{team.name.%{_team}%}%"
-        send "" to player
 
-        play sound "block.beacon.activate" with volume 1 and pitch 1.2 to player
-
-
-# ==========================================
+# ==========================================================
 # /ENV
-# ==========================================
+# ==========================================================
 
 command /env <player>:
     executable by: players
@@ -1127,96 +731,22 @@ command /env <player>:
     trigger:
 
         if isAdmin(player) is false:
-
             send "&c✖ Bu komutu kullanamazsın!" to player
-
-            play sound "entity.villager.no" with volume 1 and pitch 1 to player
-
             stop
 
         if arg-player is player:
-
             send "&c✖ Kendi envanterini bu komutla açamazsın." to player
-
-            play sound "entity.villager.no" with volume 1 and pitch 1 to player
-
             stop
 
         set {admin.inventory.%player's uuid%} to arg-player
 
-        send "" to player
-        send "&8&m━━━━━━━━━━━━━━━━━━━━━━━━" to player
-        send "&c&l⚡ ENVANTER GÖRÜNTÜLEME" to player
-        send "&7» Oyuncu: &f%arg-player's name%"
-        send "&7» Sadece görüntüleme modu."
-        send "&8&m━━━━━━━━━━━━━━━━━━━━━━━━" to player
-        send "" to player
-
         open arg-player's inventory for player
 
+        send "&c⚡ &f%arg-player's name% &7envanteri görüntüleniyor." to player
 
-# ==========================================
-# ENV TIKLAMA ENGELİ
-# ==========================================
-
-on inventory click:
-
-    if {admin.inventory.%player's uuid%} is set:
-
-        cancel event
-
-    if {admin.ender.%player's uuid%} is set:
-
-        cancel event
-
-
-# ==========================================
-# ENV SÜRÜKLEME ENGELİ
-# ==========================================
-
-on inventory drag:
-
-    if {admin.inventory.%player's uuid%} is set:
-
-        cancel event
-
-    if {admin.ender.%player's uuid%} is set:
-
-        cancel event
-
-
-# ==========================================
-# ENVANTER KAPATMA
-# ==========================================
-
-on inventory close:
-
-    delete {admin.inventory.%player's uuid%}
-    delete {admin.ender.%player's uuid%}
-
-
-# ==========================================
-# OYUNCU ÇIKIŞI - ENV
-# ==========================================
-
-on quit:
-
-    if {admin.inventory.%player's uuid%} is set:
-
-        delete {admin.inventory.%player's uuid%}
-
-    loop all players:
-
-        if {admin.inventory.%loop-player's uuid%} is player:
-
-            close loop-player's inventory
-
-            delete {admin.inventory.%loop-player's uuid%}
-
-
-# ==========================================
+# ==========================================================
 # /ENDER
-# ==========================================
+# ==========================================================
 
 command /ender <player>:
     executable by: players
@@ -1224,37 +754,47 @@ command /ender <player>:
     trigger:
 
         if isAdmin(player) is false:
-
             send "&c✖ Bu komutu kullanamazsın!" to player
-
-            play sound "entity.villager.no" with volume 1 and pitch 1 to player
-
             stop
 
         if arg-player is player:
-
-            send "&c✖ Kendi Ender Sandığını bu komutla açamazsın." to player
-
-            play sound "entity.villager.no" with volume 1 and pitch 1 to player
-
+            send "&c✖ Kendi Ender Sandığını açamazsın." to player
             stop
 
         set {admin.ender.%player's uuid%} to arg-player
 
-        send "" to player
-        send "&8&m━━━━━━━━━━━━━━━━━━━━━━━━" to player
-        send "&c&l⚡ ENDER SANDIĞI GÖRÜNTÜLEME" to player
-        send "&7» Oyuncu: &f%arg-player's name%"
-        send "&7» Sadece görüntüleme modu."
-        send "&8&m━━━━━━━━━━━━━━━━━━━━━━━━" to player
-        send "" to player
-
         open arg-player's ender chest to player
 
+        send "&c⚡ &f%arg-player's name% &7Ender Sandığı görüntüleniyor." to player
 
-# ==========================================
+# ==========================================================
+# ENV / ENDER KORUMA
+# ==========================================================
+
+on inventory click:
+
+    if {admin.inventory.%player's uuid%} is set:
+        cancel event
+
+    if {admin.ender.%player's uuid%} is set:
+        cancel event
+
+on inventory drag:
+
+    if {admin.inventory.%player's uuid%} is set:
+        cancel event
+
+    if {admin.ender.%player's uuid%} is set:
+        cancel event
+
+on inventory close:
+
+    delete {admin.inventory.%player's uuid%}
+    delete {admin.ender.%player's uuid%}
+
+# ==========================================================
 # /BİLGİ
-# ==========================================
+# ==========================================================
 
 command /bilgi <player>:
     executable by: players
@@ -1262,103 +802,42 @@ command /bilgi <player>:
     trigger:
 
         if isAdmin(player) is false:
-
             send "&c✖ Bu komutu kullanamazsın!" to player
-
-            play sound "entity.villager.no" with volume 1 and pitch 1 to player
-
             stop
 
         set {_target} to arg-player
-        set {_loc} to {_target}'s location
 
         if {team.%{_target}'s uuid%} is set:
-
             set {_team} to {team.%{_target}'s uuid%}
             set {_teamname} to {team.name.%{_team}%}
-
-            if {_teamname} is not set:
-
-                set {_teamname} to "Bilinmiyor"
-
         else:
-
             set {_teamname} to "Takımsız"
 
-        if {_target} is flying:
-
-            set {_fly} to "&aAçık"
-
-        else:
-
-            set {_fly} to "&cKapalı"
-
-        if {_target} is sneaking:
-
-            set {_sneak} to "&aEvet"
-
-        else:
-
-            set {_sneak} to "&cHayır"
-
-        send "" to player
+        send ""
         send "&8&m━━━━━━━━━━━━━━━━━━━━━━━━"
         send "&c&l⚡ OYUNCU BİLGİSİ"
         send "&8&m━━━━━━━━━━━━━━━━━━━━━━━━"
-
-        send "&7Oyuncu Adı: &f%{_target}'s name%"
+        send "&7Oyuncu: &f%{_target}'s name%"
         send "&7UUID: &f%{_target}'s uuid%"
-
-        send ""
-        send "&e&lGENEL BİLGİLER"
-        send "&7Durum: &aÇevrimiçi"
         send "&7Gamemode: &f%{_target}'s gamemode%"
         send "&7Dünya: &f%world of {_target}%"
         send "&7Ping: &f%ping of {_target}% ms"
-        send "&7Oynama Süresi: &f%time played of {_target}%"
-
-        send ""
-        send "&e&lOYUNCU DURUMU"
-        send "&7Can: &c%health of {_target}% &7/ &c%max health of {_target}%"
+        send "&7Can: &c%health of {_target}%&7/&c%max health of {_target}%"
         send "&7Açlık: &e%food level of {_target}%"
-        send "&7XP Seviyesi: &a%level of {_target}%"
-        send "&7Toplam XP: &a%total experience of {_target}%"
-        send "&7Uçuş: %{_fly}%"
-        send "&7Sneak: %{_sneak}%"
-
+        send "&7Seviye: &a%level of {_target}%"
+        send "&7Uçuş: &f%{_target} is flying%"
+        send "&7Sneak: &f%{_target} is sneaking%"
+        send "&7Takım: &f%{_teamname}%"
         send ""
         send "&e&lKONUM"
-        send "&7X: &f%x-coordinate of {_loc}%"
-        send "&7Y: &f%y-coordinate of {_loc}%"
-        send "&7Z: &f%z-coordinate of {_loc}%"
-        send "&7Yaw: &f%yaw of {_loc}%°"
-        send "&7Pitch: &f%pitch of {_loc}%°"
-
-        send ""
-        send "&e&lTAKIM"
-        send "&7Takım: &f%{_teamname}%"
-
-        if {team.%{_target}'s uuid%} is set:
-
-            send "&7Takım Üye Sayısı: &f%size of {team.members.%{_team}%::*}%/{@max-team-size}"
-
-        send ""
-        send "&e&lEŞYALAR"
-        send "&7Ana El: &f%{_target}'s tool%"
-        send "&7Off-Hand: &f%{_target}'s off hand tool%"
-        send "&7Kask: &f%helmet of {_target}%"
-        send "&7Göğüslük: &f%chestplate of {_target}%"
-        send "&7Pantolon: &f%leggings of {_target}%"
-        send "&7Bot: &f%boots of {_target}%"
-
-        send ""
+        send "&7X: &f%x-coordinate of {_target}%"
+        send "&7Y: &f%y-coordinate of {_target}%"
+        send "&7Z: &f%z-coordinate of {_target}%"
         send "&8&m━━━━━━━━━━━━━━━━━━━━━━━━"
-        send ""
 
-
-# ==========================================
-# /BAKIM
-# ==========================================
+# ==========================================================
+# BAKIM
+# ==========================================================
 
 command /bakım:
     executable by: players
@@ -1366,27 +845,13 @@ command /bakım:
     trigger:
 
         if isMaintenanceOwner(player) is false:
-
             send "&c✖ Bu komutu sadece {@maintenance-owner} kullanabilir." to player
-
-            play sound "entity.villager.no" with volume 1 and pitch 1 to player
-
             stop
 
         execute console command "whitelist on"
 
-        send "" to player
-        send "&c&l⚙ BAKIM MODU"
-        send "&7» Sunucu whitelist moduna geçirildi."
-        send "&7» Sadece whitelist'teki oyuncular girebilir."
-        send ""
-
-        play sound "block.beacon.activate" with volume 1 and pitch 1.2 to player
-
-
-# ==========================================
-# /BAKIMÇIKAR
-# ==========================================
+        send "&c&l⚙ BAKIM MODU AÇILDI" to player
+        send "&7» Whitelist aktif."
 
 command /bakımçıkar:
     executable by: players
@@ -1394,27 +859,13 @@ command /bakımçıkar:
     trigger:
 
         if isMaintenanceOwner(player) is false:
-
             send "&c✖ Bu komutu sadece {@maintenance-owner} kullanabilir." to player
-
-            play sound "entity.villager.no" with volume 1 and pitch 1 to player
-
             stop
 
         execute console command "whitelist off"
 
-        send "" to player
-        send "&a&l⚙ BAKIM MODU KAPATILDI"
-        send "&7» Sunucu whitelist modundan çıkarıldı."
-        send "&7» Oyuncular tekrar sunucuya girebilir."
-        send ""
-
-        play sound "block.beacon.deactivate" with volume 1 and pitch 1 to player
-
-
-# ==========================================
-# /BAKIMOYUNCUEKLE
-# ==========================================
+        send "&a&l⚙ BAKIM MODU KAPATILDI" to player
+        send "&7» Whitelist kapatıldı."
 
 command /bakımoyuncuekle:
     executable by: players
@@ -1422,28 +873,18 @@ command /bakımoyuncuekle:
     trigger:
 
         if isMaintenanceOwner(player) is false:
-
             send "&c✖ Bu komutu sadece {@maintenance-owner} kullanabilir." to player
-
-            play sound "entity.villager.no" with volume 1 and pitch 1 to player
-
             stop
 
         set {maintenance.input.%player's uuid%} to true
 
-        send "" to player
-        send "&e&l⚙ BAKIM OYUNCU EKLE"
-        send "&7Whitelist'e eklemek istediğin oyuncunun"
-        send "&7adını chat'e yaz."
-        send "&7İptal etmek için &ciptal &7yaz."
-        send ""
+        send "&e&l⚙ BAKIM OYUNCU EKLE" to player
+        send "&7Oyuncu adını chat'e yaz."
+        send "&7İptal: &ciptal"
 
-        play sound "block.note_block.pling" with volume 1 and pitch 1.2 to player
-
-
-# ==========================================
+# ==========================================================
 # /HOME
-# ==========================================
+# ==========================================================
 
 command /home:
     executable by: players
@@ -1454,70 +895,27 @@ command /home:
 
         wait 1 tick
 
-        set slot 0 of player's current inventory to orange stained glass pane named "&6&lHOME"
-        set slot 1 of player's current inventory to orange stained glass pane named "&6&lHOME"
-        set slot 2 of player's current inventory to orange stained glass pane named "&6&lHOME"
-        set slot 3 of player's current inventory to orange stained glass pane named "&6&lHOME"
-        set slot 4 of player's current inventory to orange stained glass pane named "&6&lSON GÜNCELLEMELER"
-        set slot 5 of player's current inventory to orange stained glass pane named "&6&lHOME"
-        set slot 6 of player's current inventory to orange stained glass pane named "&6&lHOME"
-        set slot 7 of player's current inventory to orange stained glass pane named "&6&lHOME"
-        set slot 8 of player's current inventory to orange stained glass pane named "&6&lHOME"
+        loop 27 times:
+            set slot (loop-number - 1) of player's current inventory to orange stained glass pane named "&6&lHOME"
 
-        set slot 9 of player's current inventory to orange stained glass pane named "&6&lHOME"
-        set slot 17 of player's current inventory to orange stained glass pane named "&6&lHOME"
-        set slot 18 of player's current inventory to orange stained glass pane named "&6&lHOME"
-        set slot 19 of player's current inventory to orange stained glass pane named "&6&lHOME"
-        set slot 20 of player's current inventory to orange stained glass pane named "&6&lHOME"
-        set slot 21 of player's current inventory to orange stained glass pane named "&6&lHOME"
-        set slot 22 of player's current inventory to orange stained glass pane named "&6&lHOME"
-        set slot 23 of player's current inventory to orange stained glass pane named "&6&lHOME"
-        set slot 24 of player's current inventory to orange stained glass pane named "&6&lHOME"
-        set slot 25 of player's current inventory to orange stained glass pane named "&6&lHOME"
-        set slot 26 of player's current inventory to orange stained glass pane named "&6&lHOME"
-
-        set slot 4 of player's current inventory to orange concrete named "&6&lSON GÜNCELLEMELER" with lore "&7Yeni eklenen özellikleri görüntüle." and "&eTıkla &8» &fGüncellemeler GUI'si"
+        set slot 4 of player's current inventory to orange concrete named "&6&lSON GÜNCELLEMELER"
 
         if {home.%player's uuid%} is set:
-
-            set slot 11 of player's current inventory to orange concrete named "&6&lHOME KONUMUNU GÜNCELLE" with lore "&7Bulunduğun konumu home yap." and "&8Mevcut home üzerine yazılır."
-
+            set slot 11 of player's current inventory to orange concrete named "&6&lHOME KONUMUNU GÜNCELLE"
+            set slot 13 of player's current inventory to compass named "&6&lHOME'A GİT"
+            set slot 15 of player's current inventory to paper named "&6&lHOME BİLGİSİ"
+            set slot 16 of player's current inventory to red concrete named "&c&lHOME SİL"
         else:
-
-            set slot 11 of player's current inventory to orange concrete named "&6&lHOME OLUŞTUR" with lore "&7Bulunduğun konumu home olarak kaydet."
-
-        if {home.%player's uuid%} is set:
-
-            set slot 13 of player's current inventory to compass named "&6&lHOME'A GİT" with lore "&7Kayıtlı home konumuna ışınlan."
-
-        else:
-
-            set slot 13 of player's current inventory to gray dye named "&7&lHOME YOK" with lore "&8Önce bir home oluştur."
-
-        if {home.%player's uuid%} is set:
-
-            set {_homeLoc} to {home.%player's uuid%}
-
-            set slot 15 of player's current inventory to paper named "&6&lHOME BİLGİSİ" with lore "&7Dünya: &f%world of {_homeLoc}%" and "&7X: &f%x-coordinate of {_homeLoc}%" and "&7Y: &f%y-coordinate of {_homeLoc}%" and "&7Z: &f%z-coordinate of {_homeLoc}%"
-
-        else:
-
-            set slot 15 of player's current inventory to gray dye named "&7&lHOME BİLGİSİ" with lore "&8Henüz kayıtlı bir home yok."
-
-        if {home.%player's uuid%} is set:
-
-            set slot 16 of player's current inventory to red concrete named "&c&lHOME SİL" with lore "&7Kayıtlı home konumunu sil."
-
-        else:
-
-            set slot 16 of player's current inventory to gray dye named "&7&lHOME SİL" with lore "&8Silinecek bir home yok."
+            set slot 11 of player's current inventory to orange concrete named "&6&lHOME OLUŞTUR"
+            set slot 13 of player's current inventory to gray dye named "&7&lHOME YOK"
+            set slot 15 of player's current inventory to gray dye named "&7&lHOME BİLGİSİ"
+            set slot 16 of player's current inventory to gray dye named "&7&lHOME SİL"
 
         set slot 14 of player's current inventory to barrier named "&c&lKAPAT"
 
-
-# ==========================================
+# ==========================================================
 # /SONGUNCELLEMELER
-# ==========================================
+# ==========================================================
 
 command /songuncellemeler:
     executable by: players
@@ -1528,76 +926,24 @@ command /songuncellemeler:
 
         wait 1 tick
 
-        set slot 0 of player's current inventory to orange stained glass pane named "&6&lWASTTRY"
-        set slot 1 of player's current inventory to orange stained glass pane named "&6&lWASTTRY"
-        set slot 2 of player's current inventory to orange stained glass pane named "&6&lWASTTRY"
-        set slot 3 of player's current inventory to orange stained glass pane named "&6&lWASTTRY"
-        set slot 4 of player's current inventory to orange stained glass pane named "&6&lWASTTRY"
-        set slot 5 of player's current inventory to orange stained glass pane named "&6&lWASTTRY"
-        set slot 6 of player's current inventory to orange stained glass pane named "&6&lWASTTRY"
-        set slot 7 of player's current inventory to orange stained glass pane named "&6&lWASTTRY"
-        set slot 8 of player's current inventory to orange stained glass pane named "&6&lWASTTRY"
+        loop 27 times:
+            set slot (loop-number - 1) of player's current inventory to orange stained glass pane named "&6&lWASTTRY"
 
-        set slot 9 of player's current inventory to orange stained glass pane named "&6&lWASTTRY"
-        set slot 17 of player's current inventory to orange stained glass pane named "&6&lWASTTRY"
+        set slot 10 of player's current inventory to emerald named "&a&lTAKIM SİSTEMİ" with lore "&7• Maksimum {@max-team-size} kişi" and "&7• Takım daveti" and "&7• Takım renkleri"
 
-        set slot 18 of player's current inventory to orange stained glass pane named "&6&lWASTTRY"
-        set slot 19 of player's current inventory to orange stained glass pane named "&6&lWASTTRY"
-        set slot 20 of player's current inventory to orange stained glass pane named "&6&lWASTTRY"
-        set slot 21 of player's current inventory to orange stained glass pane named "&6&lWASTTRY"
-        set slot 22 of player's current inventory to orange stained glass pane named "&6&lWASTTRY"
-        set slot 23 of player's current inventory to orange stained glass pane named "&6&lWASTTRY"
-        set slot 24 of player's current inventory to orange stained glass pane named "&6&lWASTTRY"
-        set slot 25 of player's current inventory to orange stained glass pane named "&6&lWASTTRY"
-        set slot 26 of player's current inventory to orange stained glass pane named "&6&lWASTTRY"
+        set slot 12 of player's current inventory to chest named "&6&lHOME SİSTEMİ" with lore "&7• Tek home" and "&7• Home GUI" and "&7• Home ışınlanma"
 
-        set slot 10 of player's current inventory to emerald named "&a&lTAKIM SİSTEMİ" with lore "&7• Maksimum {@max-team-size} kişi" and "&7• Takım daveti" and "&7• Takım renkleri" and "&7• Takım chat sistemi"
+        set slot 14 of player's current inventory to ender chest named "&5&lADMIN ARAÇLARI" with lore "&7• /env" and "&7• /ender" and "&7• /bilgi"
 
-        set slot 12 of player's current inventory to chest named "&6&lHOME SİSTEMİ" with lore "&7• Tek home" and "&7• Turuncu Home GUI" and "&7• Home oluşturma / güncelleme" and "&7• Home ışınlanma"
+        set slot 16 of player's current inventory to paper named "&c&lMODERASYON" with lore "&7• Mute" and "&7• Admin uyarısı" and "&7• Bakım sistemi"
 
-        set slot 14 of player's current inventory to ender chest named "&5&lADMIN ARAÇLARI" with lore "&7• /env" and "&7• /ender" and "&7• /bilgi" and "&7• Admin görüntüleme sistemi"
-
-        set slot 16 of player's current inventory to paper named "&c&lMODERASYON" with lore "&7• Mute sistemi" and "&7• Admin uyarısı" and "&7• Bakım / whitelist sistemi"
-
-        set slot 13 of player's current inventory to golden apple named "&e&lSON SÜRÜM" with lore "&7WastTry sunucusuna eklenen" and "&7özellikler bu menüde gösterilir."
+        set slot 13 of player's current inventory to golden apple named "&e&lSON SÜRÜM" with lore "&7WastTry Admin System"
 
         set slot 22 of player's current inventory to barrier named "&c&lGERİ"
 
-
-# ==========================================
-# ESKİ HOME KOMUTLARINI ENGELLE
-# ==========================================
-
-on command "/sethome":
-
-    cancel event
-
-    send "&c✖ Home işlemleri sadece &6/home &cmenüsünden yapılabilir." to player
-
-    stop
-
-
-on command "/delhome":
-
-    cancel event
-
-    send "&c✖ Home işlemleri sadece &6/home &cmenüsünden yapılabilir." to player
-
-    stop
-
-
-on command "/homelist":
-
-    cancel event
-
-    send "&c✖ Sadece tek bir home kullanabilirsin. &6/home &cmenüsünü aç." to player
-
-    stop
-
-
-# ==========================================
-# HOME GUI TIKLAMALARI
-# ==========================================
+# ==========================================================
+# HOME GUI
+# ==========================================================
 
 on inventory click:
 
@@ -1606,15 +952,11 @@ on inventory click:
         cancel event
 
         if clicked inventory is not event-inventory:
-
             stop
 
         if clicked slot is 4:
-
             close player's inventory
-
             execute player command "/songuncellemeler"
-
             stop
 
         if clicked slot is 11:
@@ -1623,24 +965,14 @@ on inventory click:
 
             close player's inventory
 
-            send "" to player
             send "&6&l⌂ HOME KAYDEDİLDİ" to player
-            send "&7» Dünya: &f%world of player's location%"
-            send "&7» Konum: &f%x-coordinate of player's location%, %y-coordinate of player's location%, %z-coordinate of player's location%"
-            send "" to player
-
             play sound "block.note_block.pling" with volume 1 and pitch 1.2 to player
-
             stop
 
         if clicked slot is 13:
 
             if {home.%player's uuid%} is not set:
-
                 send "&c✖ Önce bir home oluşturmalısın." to player
-
-                play sound "entity.villager.no" with volume 1 and pitch 1 to player
-
                 stop
 
             set {_home} to {home.%player's uuid%}
@@ -1650,37 +982,28 @@ on inventory click:
             teleport player to {_home}
 
             send "&6&l⌂ HOME'A IŞINLANDIN" to player
-
             play sound "entity.enderman.teleport" with volume 1 and pitch 1 to player
-
             stop
 
         if clicked slot is 15:
 
             if {home.%player's uuid%} is not set:
-
                 send "&c✖ Kayıtlı bir home yok." to player
-
                 stop
 
             set {_home} to {home.%player's uuid%}
 
-            send "" to player
             send "&6&l⌂ HOME BİLGİSİ" to player
-            send "&7» Dünya: &f%world of {_home}%"
-            send "&7» X: &f%x-coordinate of {_home}%"
-            send "&7» Y: &f%y-coordinate of {_home}%"
-            send "&7» Z: &f%z-coordinate of {_home}%"
-            send "" to player
-
+            send "&7Dünya: &f%world of {_home}%"
+            send "&7X: &f%x-coordinate of {_home}%"
+            send "&7Y: &f%y-coordinate of {_home}%"
+            send "&7Z: &f%z-coordinate of {_home}%"
             stop
 
         if clicked slot is 16:
 
             if {home.%player's uuid%} is not set:
-
-                send "&c✖ Silinecek bir home yok." to player
-
+                send "&c✖ Silinecek home yok." to player
                 stop
 
             delete {home.%player's uuid%}
@@ -1688,21 +1011,16 @@ on inventory click:
             close player's inventory
 
             send "&c✖ Home silindi." to player
-
-            play sound "block.anvil.land" with volume 1 and pitch 1 to player
-
             stop
 
         if clicked slot is 14:
 
             close player's inventory
-
             stop
 
-
-# ==========================================
+# ==========================================================
 # GÜNCELLEMELER GUI
-# ==========================================
+# ==========================================================
 
 on inventory click:
 
@@ -1711,7 +1029,6 @@ on inventory click:
         cancel event
 
         if clicked inventory is not event-inventory:
-
             stop
 
         if clicked slot is 22:
@@ -1720,26 +1037,27 @@ on inventory click:
 
             execute player command "/home"
 
-            stop
+# ==========================================================
+# ESKİ HOME KOMUTLARI
+# ==========================================================
 
+on command "/sethome":
+    cancel event
+    send "&c✖ Home işlemleri &6/home &cmenüsünden yapılabilir."
 
-# ==========================================
-# ÇIKIŞ
-# ==========================================
+on command "/delhome":
+    cancel event
+    send "&c✖ Home işlemleri &6/home &cmenüsünden yapılabilir."
+
+on command "/homelist":
+    cancel event
+    send "&c✖ Sadece tek bir home kullanabilirsin."
+
+# ==========================================================
+# QUIT
+# ==========================================================
 
 on quit:
-
-    if {admin.ender.%player's uuid%} is set:
-
-        delete {admin.ender.%player's uuid%}
-
-    loop all players:
-
-        if {admin.ender.%loop-player's uuid%} is player:
-
-            close loop-player's inventory
-
-            delete {admin.ender.%loop-player's uuid%}
 
     if {admin.active.%player%} is true:
 
@@ -1750,15 +1068,14 @@ on quit:
         delete {admin.gamemode.%player%}
         delete {admin.target.%player%}
 
-    delete {admin.warning.cooldown.%player%}
     delete {admin.inventory.%player's uuid%}
+    delete {admin.ender.%player's uuid%}
     delete {team.input.%player's uuid%}
     delete {maintenance.input.%player's uuid%}
 
-
-# ==========================================
-# GİRİŞ
-# ==========================================
+# ==========================================================
+# JOIN
+# ==========================================================
 
 on join:
 
@@ -1769,14 +1086,13 @@ on join:
 
     if {team.%player's uuid%} is set:
 
-        delete {team.tabbase.%player's uuid%}
-
+        # TABBASE ARTIK SİLİNMİYOR
+        # Böylece CLAN - CLAN - CLAN problemi oluşmaz.
         updateTeamTab(player)
 
-
-# ==========================================
-# TAB KONTROLÜ
-# ==========================================
+# ==========================================================
+# TAKIM TAB KONTROLÜ
+# ==========================================================
 
 every 20 ticks:
 
@@ -1788,9 +1104,7 @@ every 20 ticks:
             set {_teamname} to {team.name.%{_team}%}
 
             if {_teamname} is not set:
-
                 set {_teamname} to "TAKIM"
 
             if loop-player's tab list name does not contain {_teamname}:
-
                 updateTeamTab(loop-player)
